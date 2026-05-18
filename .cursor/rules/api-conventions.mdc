@@ -1,0 +1,78 @@
+---
+description: 
+alwaysApply: true
+---
+
+# 接口编写规范
+
+## 1. 接口文件只做请求，不写业务逻辑
+
+接口函数只封装 HTTP 调用，不做字段映射、类型转换、条件判断。
+
+```js
+// ✅ 正确
+export function apiCarbonPointsRankList(params = {}) {
+  return request.get('/auth/front/carbonPointsRank/list', params, {}, {}, true)
+}
+
+// ❌ 错误：在接口函数里做字段处理
+export function apiCarbonPointsRankList(params = {}) {
+  return request.get(...).then(res => {
+    return res.data.rows.map(item => ({ name: item.nickName || '--' }))
+  })
+}
+```
+
+## 2. 调用方直接取值，不做多层 ?? 或过度判空
+
+拿到接口数据后，直接按约定字段赋值，不加冗余的类型检查或多层空值兜底。
+
+```js
+// ✅ 正确
+apiUserExtensionStatsOwnGetByCurrent().then(res => {
+  this.availablePoints = res.data.availablePoints
+})
+
+// ❌ 错误：多余的层层判断
+apiUserExtensionStatsOwnGetByCurrent().then(res => {
+  const d = res && res.data !== undefined ? res.data : res.result ?? null
+  const v = d?.availablePoints ?? d?.points ?? null
+  this.availablePoints = (v !== null && v !== undefined && !Number.isNaN(Number(v)))
+    ? Number(v) : '--'
+})
+```
+
+## 3. 禁止硬编码 mock 数据
+
+非调试阶段不允许在模板或 data 里写死业务数据。
+
+```js
+// ✅ 正确
+data() { return { userCarbonPoints: '--' } }
+
+// ❌ 错误
+data() { return { userCarbonPoints: 1827 } }
+```
+
+```html
+<!-- ❌ 错误 -->
+<div>{{ $util.formatNumber(1827) }}</div>
+```
+
+## 4. 数据处理方法统一放 utils/，按需引入
+
+需要格式化、转换的逻辑抽到 `utils/` 作为公共函数，不要在 api/ 或页面内联写。
+
+```js
+// utils/carbonRank.js
+export function extractRankRows(res) {
+  const d = res.data
+  return Array.isArray(d) ? d : d?.rows ?? d?.list ?? []
+}
+
+// 页面使用
+import { extractRankRows } from '@/utils/carbonRank.js'
+apiCarbonPointsRankList({ type: 'month' }).then(res => {
+  this.rows = extractRankRows(res)
+})
+```
