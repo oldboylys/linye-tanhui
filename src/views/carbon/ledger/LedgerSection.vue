@@ -15,8 +15,18 @@
           <el-tag :type="statusType(scope.row.status)" size="mini">{{ statusText(scope.row.status) }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="100" align="center">
-        <template slot-scope="scope">{{ actionText(scope.row.action) }}</template>
+      <el-table-column label="操作" width="170" align="center" fixed="right">
+        <template slot-scope="scope">
+          <span :class="['action-inline', scope.row.action === 'stored' ? 'is-stored' : '']">{{ actionText(scope.row.action) }}</span>
+          <el-button
+            type="text"
+            size="small"
+            icon="el-icon-download"
+            class="btn-export"
+            title="导出"
+            @click="$emit('export-row', scope.row)"
+          />
+        </template>
       </el-table-column>
     </el-table>
   </el-card>
@@ -43,7 +53,30 @@ export default {
 </script>
 
 <style scoped>
-.section-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
-.section-meta { font-size: 12px; color: #6b7c74; font-weight: normal; }
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.section-meta {
+  font-size: 12px;
+  color: #6b7c74;
+  font-weight: normal;
+}
+.action-inline {
+  font-size: 13px;
+  color: #3d5248;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+.action-inline.is-stored {
+  color: #1a7f4b;
+}
+.btn-export {
+  color: #1a7f4b;
+  padding: 0 4px;
+  vertical-align: middle;
+}
 </style>
-
