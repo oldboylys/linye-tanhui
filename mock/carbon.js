@@ -5,7 +5,7 @@ const gis = require('./data/carbon/gis')
 const analysis = require('./data/carbon/analysis')
 const assets = require('./data/carbon/assets')
 const reports = require('./data/carbon/reports')
-const system = require('./data/carbon/system')
+const carbonSystemState = require('./state/carbon-system')
 
 module.exports = [
   { url: '/carbon/ledger/overview', type: 'get', response: () => ok({ data: ledger.overview }) },
@@ -33,5 +33,33 @@ module.exports = [
   { url: '/carbon/reports/datasets', type: 'get', response: () => ok({ data: reports.datasets }) },
   { url: '/carbon/reports/list', type: 'get', response: () => ok({ data: reports.list }) },
   { url: '/carbon/reports/types', type: 'get', response: () => ok({ data: reports.reportTypes }) },
-  { url: '/carbon/system/users', type: 'get', response: () => page(system.users, system.users.length) }
+  { url: '/carbon/system/users', type: 'get', response: () => {
+    const rows = carbonSystemState.getUsers()
+    return page(rows, rows.length)
+  }},
+  { url: '/carbon/system/users/save', type: 'post', response: req => {
+    const r = carbonSystemState.saveUser(req.body || {})
+    if (!r.ok) return { code: 500, msg: r.msg || '保存失败' }
+    return ok()
+  }},
+  { url: '/carbon/system/users/remove', type: 'post', response: req => {
+    const r = carbonSystemState.deleteUser((req.body || {}).id)
+    if (!r.ok) return { code: 500, msg: r.msg || '删除失败' }
+    return ok()
+  }},
+  { url: '/carbon/system/roles', type: 'get', response: () => ok({ data: carbonSystemState.getRoles() })},
+  { url: '/carbon/system/role/options', type: 'get', response: () => ok({ data: carbonSystemState.roleOptionsForSelect() })},
+  { url: '/carbon/system/rolePermissions', type: 'get', response: req => {
+    const roleKey = req.query.roleKey
+    return ok({ data: carbonSystemState.getPermissionsForRole(roleKey) })
+  }},
+  { url: '/carbon/system/rolePermissions/save', type: 'post', response: req => {
+    const { roleKey, keys } = req.body || {}
+    const r = carbonSystemState.saveRolePermissions(roleKey, keys || [])
+    if (!r.ok) return { code: 500, msg: '保存失败' }
+    return ok()
+  }},
+  { url: '/carbon/system/logs', type: 'get', response: req => ok({
+    data: carbonSystemState.getLogs(req.query.operator)
+  })}
 ]
