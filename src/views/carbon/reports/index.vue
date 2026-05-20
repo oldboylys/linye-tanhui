@@ -1,49 +1,119 @@
 ﻿<template>
-  <div class="app-container carbon-page">
+  <div class="app-container carbon-page carbon-reports-page">
     <div class="page-header">
       <h2>报告中心</h2>
     </div>
-    <el-row :gutter="16">
-      <el-col :span="8">
-        <el-card>
-          <div slot="header">
-            接入数据
-            <el-button type="text" size="mini" @click="selectAll">全选</el-button>
-            <el-button type="text" size="mini" @click="clearAll">清空</el-button>
+
+    <div class="reports-layout">
+      <!-- 左侧：接入数据 + 已生成报告 -->
+      <div class="left-pane">
+        <el-card class="section-card">
+          <div slot="header" class="card-header">
+            <span>接入数据</span>
+            <div class="header-actions">
+              <el-button type="text" size="mini" @click="selectAll">全选</el-button>
+              <el-button type="text" size="mini" @click="clearAll">清空</el-button>
+            </div>
           </div>
-          <div v-for="(items, type) in datasets" :key="type" class="dataset-group">
-            <p class="group-title">{{ typeLabels[type] }} ({{ selectedCount(type) }}/{{ items.length }})</p>
-            <el-checkbox v-for="item in items" :key="item.id" v-model="item.selected">{{ item.name }}</el-checkbox>
+
+          <el-tabs v-model="datasetTab" class="dataset-tabs" stretch>
+            <el-tab-pane label="Excel" name="excel">
+              <div class="dataset-list">
+                <el-checkbox v-for="item in datasets.excel" :key="item.id" v-model="item.selected">
+                  {{ item.name }} <span class="dataset-size">{{ item.size }}</span>
+                </el-checkbox>
+              </div>
+            </el-tab-pane>
+            <el-tab-pane label="栅格影像" name="raster">
+              <div class="dataset-list">
+                <el-checkbox v-for="item in datasets.raster" :key="item.id" v-model="item.selected">
+                  {{ item.name }} <span class="dataset-size">{{ item.size }}</span>
+                </el-checkbox>
+              </div>
+            </el-tab-pane>
+            <el-tab-pane label="矢量地图" name="vector">
+              <div class="dataset-list">
+                <el-checkbox v-for="item in datasets.vector" :key="item.id" v-model="item.selected">
+                  {{ item.name }} <span class="dataset-size">{{ item.size }}</span>
+                </el-checkbox>
+              </div>
+            </el-tab-pane>
+          </el-tabs>
+        </el-card>
+
+        <el-card class="section-card mt16">
+          <div slot="header" class="card-header">
+            <span>已生成报告</span>
+          </div>
+
+          <div class="report-list">
+            <div
+              v-for="report in reports"
+              :key="report.id"
+              class="report-item"
+              :class="{ active: current && current.id === report.id }"
+              @click="openReport(report)"
+            >
+              <div class="report-item-main">
+                <div class="report-title">{{ report.title }}</div>
+                <div class="report-meta">
+                  <span>{{ report.date }}</span>
+                  <span class="dot">·</span>
+                  <span>{{ report.type }}</span>
+                </div>
+                <div class="report-meta">
+                  <el-tag size="mini" type="success" effect="plain">{{ report.status === 'done' ? '已完成' : report.status }}</el-tag>
+                  <span class="count">{{ report.dataCount }} 份数据</span>
+                </div>
+              </div>
+              <div class="report-item-actions" @click.stop>
+                <el-button
+                  size="mini"
+                  type="success"
+                  plain
+                  icon="el-icon-download"
+                  :disabled="!report.pdfUrl"
+                  @click="downloadPdf(report)"
+                >
+                  下载PDF
+                </el-button>
+              </div>
+            </div>
           </div>
         </el-card>
-        <el-card class="mt16">
-          <div slot="header">生成报告</div>
-          <el-select v-model="reportType" placeholder="选择报告类型" style="width:100%">
-            <el-option v-for="t in reportTypes" :key="t" :label="t" :value="t" />
-          </el-select>
-          <el-button type="primary" style="width:100%;margin-top:12px" @click="generate">生成报告</el-button>
+      </div>
+
+      <!-- 右侧：生成报告 + PDF 预览 -->
+      <div class="right-pane">
+        <el-card class="section-card">
+          <div slot="header" class="right-topbar">
+            <div class="topbar-left">
+              <span class="topbar-title">生成报告</span>
+              <el-select v-model="reportType" placeholder="选择报告类型" size="small" class="type-select">
+                <el-option v-for="t in reportTypes" :key="t" :label="t" :value="t" />
+              </el-select>
+              <el-button type="success" size="small" icon="el-icon-s-promotion" @click="generate">生成报告</el-button>
+            </div>
+            <div class="topbar-right">
+              <el-button size="small" @click="reloadPdf" :disabled="!current || !current.pdfUrl">刷新预览</el-button>
+            </div>
+          </div>
+
+          <div class="pdf-wrap">
+            <div v-if="current && current.pdfUrl" class="pdf-frame-wrap">
+              <!-- 使用浏览器内置 PDF 渲染（对接后端后 pdfUrl 指向实际文件即可） -->
+              <iframe
+                :key="pdfKey"
+                class="pdf-frame"
+                :src="current.pdfUrl"
+                title="PDF预览"
+              />
+            </div>
+            <el-empty v-else description="点击左侧报告加载 PDF 预览" />
+          </div>
         </el-card>
-      </el-col>
-      <el-col :span="16">
-        <el-row :gutter="12">
-          <el-col :span="12" v-for="report in reports" :key="report.id">
-            <el-card class="report-card" :class="{ active: current && current.id === report.id }" @click.native="current = report">
-              <h4>{{ report.title }}</h4>
-              <p>{{ report.date }} · {{ report.type }}</p>
-              <el-tag size="mini" type="success">{{ report.status === 'done' ? '已完成' : report.status }}</el-tag>
-              <span class="data-count">{{ report.dataCount }} 份数据</span>
-            </el-card>
-          </el-col>
-        </el-row>
-        <el-card v-if="current" class="mt16">
-          <div slot="header">报告详情</div>
-          <h3>{{ current.title }}</h3>
-          <p>类型：{{ current.type }} · 日期：{{ current.date }}</p>
-          <p>关联数据 {{ current.dataCount }} 份</p>
-        </el-card>
-        <el-empty v-else description="选择左侧报告查看详情" class="mt16" />
-      </el-col>
-    </el-row>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -59,18 +129,22 @@ export default {
       reportTypes: [],
       reportType: '',
       current: null,
-      typeLabels: { excel: 'Excel', raster: '栅格影像', vector: '矢量图层' }
+      datasetTab: 'excel',
+      pdfKey: 0
     }
   },
   created() {
     getReportsDatasets().then(res => { this.datasets = res.data })
-    getReportsList().then(res => { this.reports = res.data })
+    getReportsList().then(res => {
+      this.reports = res.data
+      // 默认选中第一条并加载预览
+      if (!this.current && this.reports.length) {
+        this.openReport(this.reports[0])
+      }
+    })
     getReportTypes().then(res => { this.reportTypes = res.data })
   },
   methods: {
-    selectedCount(type) {
-      return this.datasets[type].filter(i => i.selected).length
-    },
     selectAll() {
       Object.keys(this.datasets).forEach(k => this.datasets[k].forEach(i => { i.selected = true }))
     },
@@ -78,7 +152,24 @@ export default {
       Object.keys(this.datasets).forEach(k => this.datasets[k].forEach(i => { i.selected = false }))
     },
     generate() {
+      if (!this.reportType) {
+        this.$message.warning('请选择报告类型')
+        return
+      }
       this.$message.success('报告生成任务已提交（Mock）')
+      // 真实后端：这里可调用生成接口，生成完成后刷新 reports 列表并定位到新报告
+    },
+    openReport(report) {
+      this.current = report
+      this.reloadPdf()
+    },
+    reloadPdf() {
+      this.pdfKey += 1
+    },
+    downloadPdf(report) {
+      // 简单实现：打开 pdfUrl（对接后端后可换成下载流）
+      if (!report.pdfUrl) return
+      window.open(report.pdfUrl, '_blank')
     }
   }
 }
@@ -87,13 +178,142 @@ export default {
 <style lang="scss" scoped>
 @import '@/assets/styles/carbon.scss';
 .mt16 { margin-top: 16px; }
-.dataset-group { margin-bottom: 16px; }
-.group-title { font-weight: 600; margin-bottom: 8px; }
-.el-checkbox { display: block; margin: 4px 0; }
-.report-card { cursor: pointer; margin-bottom: 12px; }
-.report-card.active { border-color: #1a7f4b; }
-.report-card h4 { margin: 0 0 8px; font-size: 14px; }
-.data-count { float: right; font-size: 12px; color: #888; }
+
+.reports-layout {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 16px;
+}
+
+.left-pane,
+.right-pane {
+  min-width: 0;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  .header-actions {
+    display: flex;
+    gap: 6px;
+  }
+}
+
+.dataset-tabs ::v-deep .el-tabs__item.is-active {
+  color: #1a7f4b;
+}
+.dataset-tabs ::v-deep .el-tabs__active-bar {
+  background-color: #1a7f4b;
+}
+.dataset-list {
+  max-height: 240px;
+  overflow: auto;
+  padding-right: 4px;
+  .el-checkbox {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 8px 0;
+  }
+  .dataset-size {
+    color: #98a6a0;
+    font-size: 12px;
+    margin-left: 10px;
+  }
+}
+
+.report-list {
+  max-height: 420px;
+  overflow: auto;
+}
+
+.report-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #e8f0eb;
+  border-radius: 10px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  &:hover {
+    border-color: #b8dcc8;
+  }
+  &.active {
+    background: #e8f5ee;
+    border-color: #1a7f4b;
+  }
+}
+.report-title {
+  font-weight: 600;
+  color: #1a2e24;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+.report-meta {
+  font-size: 12px;
+  color: #6b7c74;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  .dot {
+    opacity: 0.7;
+  }
+  .count {
+    margin-left: 8px;
+    color: #8a9a92;
+  }
+}
+.report-item-actions {
+  display: flex;
+  align-items: flex-start;
+}
+
+.right-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  .topbar-title {
+    font-weight: 600;
+    color: #1a2e24;
+  }
+  .type-select {
+    width: 220px;
+  }
+}
+
+.pdf-wrap {
+  height: calc(100vh - 220px);
+  min-height: 560px;
+}
+.pdf-frame-wrap {
+  height: 100%;
+}
+.pdf-frame {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 10px;
+  background: #fff;
+}
+
+@media (max-width: 1100px) {
+  .reports-layout {
+    grid-template-columns: 1fr;
+  }
+  .pdf-wrap {
+    height: 560px;
+    min-height: 560px;
+  }
+}
 </style>
 
 
