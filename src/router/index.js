@@ -64,13 +64,13 @@ export const constantRoutes = [
   {
     path: '',
     component: Layout,
-    redirect: 'index',
+    redirect: '/carbon/ledger',
+    hidden: true,
     children: [
       {
         path: 'index',
-        component: () => import('@/views/index'),
-        name: 'Index',
-        meta: { title: '首页', icon: 'dashboard', affix: true }
+        redirect: '/carbon/ledger',
+        hidden: true
       }
     ]
   },

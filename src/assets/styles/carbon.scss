@@ -1,0 +1,45 @@
+$carbon-primary: #1a7f4b;
+$carbon-primary-light: #2d9c5a;
+$carbon-primary-dark: #0f5c36;
+$carbon-bg: #f0f7f3;
+
+.carbon-page {
+  .page-header {
+    margin-bottom: 20px;
+    h2 {
+      margin: 0 0 8px;
+      font-size: 22px;
+      color: #1a2e24;
+      font-weight: 600;
+    }
+    .page-desc {
+      margin: 0;
+      color: #6b7c74;
+      font-size: 14px;
+    }
+  }
+  .stat-row {
+    margin-bottom: 20px;
+  }
+  .stat-card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    border: 1px solid #e8f0eb;
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: $carbon-primary;
+      line-height: 1.2;
+    }
+    .stat-label {
+      margin-top: 8px;
+      font-size: 13px;
+      color: #6b7c74;
+    }
+  }
+  .section-card {
+    margin-bottom: 16px;
+  }
+}

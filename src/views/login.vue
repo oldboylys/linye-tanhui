@@ -1,109 +1,75 @@
 <template>
-  <div class="login">
-    <el-form ref="loginForm" :model="loginForm" :rules="loginRules" class="login-form">
-      <h3 class="title">{{title}}</h3>
-      <el-form-item prop="username">
-        <el-input
-          v-model="loginForm.username"
-          type="text"
-          auto-complete="off"
-          placeholder="账号"
-        >
-          <svg-icon slot="prefix" icon-class="user" class="el-input__icon input-icon" />
-        </el-input>
-      </el-form-item>
-      <el-form-item prop="password">
-        <el-input
-          v-model="loginForm.password"
-          type="password"
-          auto-complete="off"
-          placeholder="密码"
-          @keyup.enter.native="handleLogin"
-        >
-          <svg-icon slot="prefix" icon-class="password" class="el-input__icon input-icon" />
-        </el-input>
-      </el-form-item>
-      <el-form-item prop="code" v-if="captchaEnabled">
-        <el-input
-          v-model="loginForm.code"
-          auto-complete="off"
-          placeholder="验证码"
-          style="width: 63%"
-          @keyup.enter.native="handleLogin"
-        >
-          <svg-icon slot="prefix" icon-class="validCode" class="el-input__icon input-icon" />
-        </el-input>
-        <div class="login-code">
-          <img :src="codeUrl" @click="getCode" class="login-code-img"/>
-        </div>
-      </el-form-item>
-      <el-checkbox v-model="loginForm.rememberMe" style="margin:0px 0px 25px 0px;">记住密码</el-checkbox>
-      <el-form-item style="width:100%;">
-        <el-button
-          :loading="loading"
-          size="medium"
-          type="primary"
-          style="width:100%;"
-          @click.native.prevent="handleLogin"
-        >
-          <span v-if="!loading">登 录</span>
-          <span v-else>登 录 中...</span>
-        </el-button>
-        <div style="float: right;" v-if="register">
-          <router-link class="link-type" :to="'/register'">立即注册</router-link>
-        </div>
-      </el-form-item>
-    </el-form>
-    <!--  底部  -->
-    <div class="el-login-footer">
-      <span>{{ footerContent }}</span>
+  <div class="carbon-login">
+    <div class="login-banner">
+      <div class="banner-overlay" />
+      <div class="banner-content">
+        <p class="banner-tag">梵净山 · 江口</p>
+        <h1 class="banner-title">世界自然遗产 · 国家级自然保护区 · 地球绿洲</h1>
+        <p class="banner-sub">森林覆盖率 77.3% · 碳汇资源丰富 · 生态文明先行区</p>
+      </div>
+    </div>
+    <div class="login-panel">
+      <div class="login-form-wrap">
+        <h2 class="form-title">江口县碳汇开发管理平台</h2>
+        <p class="form-subtitle">Carbon Sink Development Management</p>
+        <el-form ref="loginForm" :model="loginForm" :rules="loginRules" class="login-form">
+          <el-form-item prop="username">
+            <el-input v-model="loginForm.username" placeholder="账号" prefix-icon="el-icon-user" />
+          </el-form-item>
+          <el-form-item prop="password">
+            <el-input v-model="loginForm.password" type="password" placeholder="密码" prefix-icon="el-icon-lock" @keyup.enter.native="handleLogin" />
+          </el-form-item>
+          <el-form-item prop="code" v-if="captchaEnabled">
+            <el-input v-model="loginForm.code" placeholder="验证码" style="width: 63%" @keyup.enter.native="handleLogin" />
+            <div class="login-code">
+              <img :src="codeUrl" class="login-code-img" @click="getCode" />
+            </div>
+          </el-form-item>
+          <el-button type="primary" class="login-btn" :loading="loading" @click.native.prevent="handleLogin">登 录</el-button>
+        </el-form>
+        <p class="demo-tip">演示账号：admin / admin123</p>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-import { getCodeImg } from "@/api/login"
-import Cookies from "js-cookie"
+import { getCodeImg } from '@/api/login'
+import Cookies from 'js-cookie'
 import { encrypt, decrypt } from '@/utils/jsencrypt'
-import defaultSettings from '@/settings'
 
 export default {
-  name: "Login",
+  name: 'Login',
   data() {
     return {
-      title: process.env.VUE_APP_TITLE,
-      footerContent: defaultSettings.footerContent,
-      codeUrl: "",
+      codeUrl: '',
       loginForm: {
-        username: "admin",
-        password: "admin123",
-        rememberMe: false,
-        code: "",
-        uuid: ""
+        username: 'admin',
+        password: 'admin123',
+        code: '',
+        uuid: ''
       },
       loginRules: {
-        username: [
-          { required: true, trigger: "blur", message: "请输入您的账号" }
-        ],
-        password: [
-          { required: true, trigger: "blur", message: "请输入您的密码" }
-        ],
-        code: [{ required: true, trigger: "change", message: "请输入验证码" }]
+        username: [{ required: true, trigger: 'blur', message: '请输入账号' }],
+        password: [{ required: true, trigger: 'blur', message: '请输入密码' }],
+        code: [{ required: true, trigger: 'change', message: '请输入验证码' }]
       },
       loading: false,
-      // 验证码开关
       captchaEnabled: true,
-      // 注册开关
-      register: false,
       redirect: undefined
     }
   },
   watch: {
     $route: {
-      handler: function(route) {
+      handler(route) {
         this.redirect = route.query && route.query.redirect
       },
       immediate: true
+    },
+    captchaEnabled(val) {
+      if (!val) {
+        this.loginRules.code = []
+      }
     }
   },
   created() {
@@ -115,43 +81,31 @@ export default {
       getCodeImg().then(res => {
         this.captchaEnabled = res.captchaEnabled === undefined ? true : res.captchaEnabled
         if (this.captchaEnabled) {
-          this.codeUrl = "data:image/gif;base64," + res.img
+          this.codeUrl = 'data:image/gif;base64,' + res.img
           this.loginForm.uuid = res.uuid
+        } else {
+          this.loginRules.code = []
         }
       })
     },
     getCookie() {
-      const username = Cookies.get("username")
-      const password = Cookies.get("password")
-      const rememberMe = Cookies.get('rememberMe')
-      this.loginForm = {
-        username: username === undefined ? this.loginForm.username : username,
-        password: password === undefined ? this.loginForm.password : decrypt(password),
-        rememberMe: rememberMe === undefined ? false : Boolean(rememberMe)
+      const username = Cookies.get('username')
+      const password = Cookies.get('password')
+      if (username) {
+        this.loginForm.username = username
+        this.loginForm.password = decrypt(password)
       }
     },
     handleLogin() {
       this.$refs.loginForm.validate(valid => {
-        if (valid) {
-          this.loading = true
-          if (this.loginForm.rememberMe) {
-            Cookies.set("username", this.loginForm.username, { expires: 30 })
-            Cookies.set("password", encrypt(this.loginForm.password), { expires: 30 })
-            Cookies.set('rememberMe', this.loginForm.rememberMe, { expires: 30 })
-          } else {
-            Cookies.remove("username")
-            Cookies.remove("password")
-            Cookies.remove('rememberMe')
-          }
-          this.$store.dispatch("Login", this.loginForm).then(() => {
-            this.$router.push({ path: this.redirect || "/" }).catch(()=>{})
-          }).catch(() => {
-            this.loading = false
-            if (this.captchaEnabled) {
-              this.getCode()
-            }
-          })
-        }
+        if (!valid) return
+        this.loading = true
+        this.$store.dispatch('Login', this.loginForm).then(() => {
+          this.$router.push({ path: this.redirect || '/carbon/ledger' }).catch(() => {})
+        }).catch(() => {
+          this.loading = false
+          if (this.captchaEnabled) this.getCode()
+        })
       })
     }
   }
@@ -159,65 +113,96 @@ export default {
 </script>
 
 <style rel="stylesheet/scss" lang="scss" scoped>
-.login {
+.carbon-login {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100%;
-  background-image: url("../assets/images/login-background.jpg");
-  background-size: cover;
+  min-height: 100vh;
 }
-.title {
-  margin: 0px auto 30px auto;
-  text-align: center;
-  color: #707070;
+.login-banner {
+  flex: 1;
+  position: relative;
+  background: url('../assets/images/login-background.jpg') center/cover no-repeat;
+  display: flex;
+  align-items: flex-end;
+  padding: 48px;
 }
-
-.login-form {
-  border-radius: 6px;
-  background: #ffffff;
-  width: 400px;
-  padding: 25px 25px 5px 25px;
+.banner-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(15, 92, 54, 0.75), rgba(26, 127, 75, 0.45));
+}
+.banner-content {
+  position: relative;
   z-index: 1;
-  .el-input {
-    height: 38px;
-    input {
-      height: 38px;
-    }
-  }
-  .input-icon {
-    height: 39px;
-    width: 14px;
-    margin-left: 2px;
-  }
+  color: #fff;
+  max-width: 520px;
 }
-.login-tip {
-  font-size: 13px;
+.banner-tag {
+  font-size: 14px;
+  letter-spacing: 4px;
+  opacity: 0.9;
+  margin-bottom: 16px;
+}
+.banner-title {
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.6;
+  margin: 0 0 12px;
+}
+.banner-sub {
+  font-size: 14px;
+  opacity: 0.85;
+  margin: 0;
+}
+.login-panel {
+  width: 480px;
+  min-width: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  padding: 40px;
+}
+.form-title {
+  margin: 0 0 8px;
+  font-size: 22px;
+  color: #1a2e24;
   text-align: center;
-  color: #bfbfbf;
+}
+.form-subtitle {
+  margin: 0 0 32px;
+  font-size: 13px;
+  color: #8a9a92;
+  text-align: center;
+}
+.login-form ::v-deep .el-input input {
+  height: 44px;
+}
+.login-btn {
+  width: 100%;
+  height: 44px;
+  margin-top: 8px;
+  background: #1a7f4b;
+  border-color: #1a7f4b;
+  font-size: 16px;
+}
+.login-btn:hover,
+.login-btn:focus {
+  background: #2d9c5a;
+  border-color: #2d9c5a;
 }
 .login-code {
   width: 33%;
-  height: 38px;
   float: right;
+  height: 44px;
   img {
+    height: 44px;
     cursor: pointer;
-    vertical-align: middle;
   }
 }
-.el-login-footer {
-  height: 40px;
-  line-height: 40px;
-  position: fixed;
-  bottom: 0;
-  width: 100%;
+.demo-tip {
+  margin-top: 24px;
   text-align: center;
-  color: #fff;
-  font-family: Arial;
-  font-size: 12px;
-  letter-spacing: 1px;
-}
-.login-code-img {
-  height: 38px;
+  font-size: 13px;
+  color: #8a9a92;
 }
 </style>
