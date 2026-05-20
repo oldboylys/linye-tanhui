@@ -25,6 +25,8 @@ module.exports = [
   { url: '/carbon/gis/regions', type: 'get', response: () => ok({ data: gis.regions }) },
   { url: '/carbon/analysis/summary', type: 'get', response: () => ok({ data: analysis.summary }) },
   { url: '/carbon/analysis/datasets', type: 'get', response: () => ok({ data: analysis.datasets }) },
+  { url: '/carbon/analysis/filters', type: 'get', response: () => ok({ data: analysis.filterOptions }) },
+  { url: '/carbon/analysis/charts', type: 'post', response: req => ok({ data: analysis.buildCharts(req.body || {}) }) },
   { url: '/carbon/analysis/result', type: 'get', response: () => ok({
     data: { forestStructure: analysis.forestStructure, regionCompare: analysis.regionCompare }
   })},
