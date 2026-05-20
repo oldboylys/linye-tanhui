@@ -1,11 +1,11 @@
 const { ok, page } = require('./utils')
-const translation = require('./data/carbon/translation')
 const ledger = require('./data/carbon/ledger')
 const gis = require('./data/carbon/gis')
 const analysis = require('./data/carbon/analysis')
 const assets = require('./data/carbon/assets')
 const reports = require('./data/carbon/reports')
 const carbonSystemState = require('./state/carbon-system')
+const translationState = require('./state/carbon-translation')
 
 module.exports = [
   { url: '/carbon/ledger/overview', type: 'get', response: () => ok({ data: ledger.overview }) },
@@ -13,13 +13,23 @@ module.exports = [
   { url: '/carbon/ledger/excel', type: 'get', response: () => ok({ data: ledger.excel }) },
   { url: '/carbon/ledger/raster', type: 'get', response: () => ok({ data: ledger.raster }) },
   { url: '/carbon/ledger/vector', type: 'get', response: () => ok({ data: ledger.vector }) },
-  { url: '/carbon/translation/stats', type: 'get', response: () => ok({ data: translation.stats }) },
+  { url: '/carbon/translation/stats', type: 'get', response: () => ok({ data: translationState.stats() }) },
   { url: '/carbon/translation/list', type: 'get', response: req => {
-    const status = req.query.status
-    let rows = translation.list
-    if (status === '1') rows = rows.filter(r => r.status === '1')
-    if (status === '0') rows = rows.filter(r => r.status === '0')
+    const rows = translationState.query({
+      status: req.query.status || '',
+      keyword: req.query.keyword || ''
+    })
     return page(rows, rows.length)
+  }},
+  { url: '/carbon/translation/save', type: 'post', response: req => {
+    const r = translationState.save(req.body || {})
+    if (!r.ok) return { code: 500, msg: r.msg || '保存失败' }
+    return ok()
+  }},
+  { url: '/carbon/translation/remove', type: 'post', response: req => {
+    const r = translationState.remove((req.body || {}).id)
+    if (!r.ok) return { code: 500, msg: r.msg || '删除失败' }
+    return ok()
   }},
   { url: '/carbon/gis/layers', type: 'get', response: () => ok({ data: gis.layers }) },
   { url: '/carbon/gis/regions', type: 'get', response: () => ok({ data: gis.regions }) },
