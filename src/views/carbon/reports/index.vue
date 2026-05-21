@@ -5,99 +5,8 @@
     </div>
 
     <div class="reports-layout">
-      <!-- 左侧：接入数据 + 已生成报告 -->
-      <div class="left-pane">
-        <el-card class="section-card">
-          <div slot="header" class="card-header">
-            <span>接入数据</span>
-            <div class="header-actions">
-              <el-button type="text" size="mini" @click="selectAll">全选</el-button>
-              <el-button type="text" size="mini" @click="clearAll">清空</el-button>
-            </div>
-          </div>
-
-          <el-tabs v-model="datasetTab" class="dataset-tabs" stretch>
-            <el-tab-pane label="Excel" name="excel">
-              <div class="dataset-list">
-                <el-checkbox v-for="item in datasets.excel" :key="item.id" v-model="item.selected">
-                  {{ item.name }} <span class="dataset-size">{{ item.size }}</span>
-                </el-checkbox>
-              </div>
-            </el-tab-pane>
-            <el-tab-pane label="栅格影像" name="raster">
-              <div class="dataset-list">
-                <el-checkbox v-for="item in datasets.raster" :key="item.id" v-model="item.selected">
-                  {{ item.name }} <span class="dataset-size">{{ item.size }}</span>
-                </el-checkbox>
-              </div>
-            </el-tab-pane>
-            <el-tab-pane label="矢量地图" name="vector">
-              <div class="dataset-list">
-                <el-checkbox v-for="item in datasets.vector" :key="item.id" v-model="item.selected">
-                  {{ item.name }} <span class="dataset-size">{{ item.size }}</span>
-                </el-checkbox>
-              </div>
-            </el-tab-pane>
-          </el-tabs>
-        </el-card>
-
-        <el-card class="section-card mt16">
-          <div slot="header" class="card-header">
-            <span>已生成报告</span>
-          </div>
-
-          <div class="report-list">
-            <div
-              v-for="report in reports"
-              :key="report.id"
-              class="report-item"
-              :class="{ active: current && current.id === report.id }"
-              @click="openReport(report)"
-            >
-              <div class="report-item-main">
-                <div class="report-title">{{ report.title }}</div>
-                <div class="report-meta">
-                  <span>{{ report.date }}</span>
-                  <span class="dot">·</span>
-                  <span>{{ report.type }}</span>
-                </div>
-                <div class="report-meta">
-                  <el-tag size="mini" type="success" effect="plain">{{ report.status === 'done' ? '已完成' : report.status }}</el-tag>
-                  <span class="count">{{ report.dataCount }} 份数据</span>
-                </div>
-              </div>
-              <div class="report-item-actions" @click.stop>
-                <el-button
-                  size="mini"
-                  type="success"
-                  plain
-                  icon="el-icon-download"
-                  :disabled="!report.pdfUrl"
-                  @click="downloadPdf(report)"
-                >
-                  下载PDF
-                </el-button>
-              </div>
-            </div>
-          </div>
-        </el-card>
-      </div>
-
-      <!-- 右侧：生成报告 + PDF 预览 -->
+      <!-- 左侧：生成报告 + PDF 预览 -->
       <div class="right-pane">
-        <el-card class="section-card">
-          <div slot="header" class="right-topbar">
-            <div class="topbar-left">
-              <span class="topbar-title">生成报告</span>
-              <el-select v-model="reportType" placeholder="选择报告类型" size="small" class="type-select">
-                <el-option v-for="t in reportTypes" :key="t" :label="t" :value="t" />
-              </el-select>
-              <el-button type="success" size="small" icon="el-icon-s-promotion" @click="generate">生成报告</el-button>
-            </div>
-            <div class="topbar-right">
-              <el-button size="small" @click="reloadPdf" :disabled="!current || !current.pdfUrl">刷新预览</el-button>
-            </div>
-          </div>
 
           <div class="pdf-wrap">
             <div v-if="current && current.pdfUrl" class="pdf-frame-wrap">
@@ -110,6 +19,98 @@
               />
             </div>
             <el-empty v-else description="点击左侧报告加载 PDF 预览" />
+          </div>
+      </div>
+
+      <!-- 右侧：接入数据 + 已生成报告 -->
+      <div class="left-pane">
+        <el-card class="left-panel-card" shadow="never">
+          <div slot="header" class="left-card-topbar">
+            <el-select v-model="reportType" placeholder="选择报告类型" size="small" class="type-select">
+              <el-option v-for="t in reportTypes" :key="t" :label="t" :value="t" />
+            </el-select>
+            <el-button type="success" size="small" icon="el-icon-s-promotion" @click="generate">生成报告</el-button>
+          </div>
+
+          <div class="left-card-body">
+            <section class="left-section">
+              <div class="section-header">
+                <span>接入数据</span>
+                <div class="header-actions">
+                  <el-button type="text" size="mini" @click="selectAll">全选</el-button>
+                  <el-button type="text" size="mini" @click="clearAll">清空</el-button>
+                </div>
+              </div>
+              <div class="section-scroll">
+                <el-tabs v-model="datasetTab" class="dataset-tabs" stretch>
+                  <el-tab-pane label="Excel" name="excel">
+                    <div class="dataset-list">
+                      <el-checkbox v-for="item in datasets.excel" :key="item.id" v-model="item.selected">
+                        {{ item.name }} <span class="dataset-size">{{ item.size }}</span>
+                      </el-checkbox>
+                    </div>
+                  </el-tab-pane>
+                  <el-tab-pane label="栅格影像" name="raster">
+                    <div class="dataset-list">
+                      <el-checkbox v-for="item in datasets.raster" :key="item.id" v-model="item.selected">
+                        {{ item.name }} <span class="dataset-size">{{ item.size }}</span>
+                      </el-checkbox>
+                    </div>
+                  </el-tab-pane>
+                  <el-tab-pane label="矢量地图" name="vector">
+                    <div class="dataset-list">
+                      <el-checkbox v-for="item in datasets.vector" :key="item.id" v-model="item.selected">
+                        {{ item.name }} <span class="dataset-size">{{ item.size }}</span>
+                      </el-checkbox>
+                    </div>
+                  </el-tab-pane>
+                </el-tabs>
+              </div>
+            </section>
+
+            <div class="section-divider" />
+
+            <section class="left-section">
+              <div class="section-header">
+                <span>已生成报告</span>
+              </div>
+              <div class="section-scroll">
+                <div class="report-list">
+                  <div
+                    v-for="report in reports"
+                    :key="report.id"
+                    class="report-item"
+                    :class="{ active: current && current.id === report.id }"
+                    @click="openReport(report)"
+                  >
+                    <div class="report-item-main">
+                      <div class="report-title">{{ report.title }}</div>
+                      <div class="report-meta">
+                        <span>{{ report.date }}</span>
+                        <span class="dot">·</span>
+                        <span>{{ report.type }}</span>
+                      </div>
+                      <div class="report-meta">
+                        <el-tag size="mini" type="success" effect="plain">{{ report.status === 'done' ? '已完成' : report.status }}</el-tag>
+                        <span class="count">{{ report.dataCount }} 份数据</span>
+                      </div>
+                    </div>
+                    <div class="report-item-actions" @click.stop>
+                      <el-button
+                        size="mini"
+                        type="success"
+                        plain
+                        icon="el-icon-download"
+                        :disabled="!report.pdfUrl"
+                        @click="downloadPdf(report)"
+                      >
+                        下载PDF
+                      </el-button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
           </div>
         </el-card>
       </div>
@@ -177,12 +178,12 @@ export default {
 
 <style lang="scss" scoped>
 @import '@/assets/styles/carbon.scss';
-.mt16 { margin-top: 16px; }
 
 .reports-layout {
   display: grid;
-  grid-template-columns: 380px 1fr;
+  grid-template-columns: 1fr 380px;
   gap: 16px;
+  align-items: stretch;
 }
 
 .left-pane,
@@ -190,14 +191,84 @@ export default {
   min-width: 0;
 }
 
-.card-header {
+.left-pane {
+  height: calc(100vh - 160px);
+  min-height: 560px;
+}
+
+.left-panel-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  border: 1px solid #e8f0eb;
+
+  ::v-deep .el-card__header {
+    padding: 12px 16px;
+    border-bottom: 1px solid #e8f0eb;
+  }
+  ::v-deep .el-card__body {
+    flex: 1;
+    min-height: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+.left-card-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  .type-select {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.left-card-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.left-section {
+  flex: 1 1 50%;
+  max-height: 50%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.section-divider {
+  flex-shrink: 0;
+  height: 1px;
+  background: #e8f0eb;
+}
+
+.section-header {
+  flex-shrink: 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 10px 16px 8px;
+  font-weight: 600;
+  font-size: 14px;
+  color: #1a2e24;
   .header-actions {
     display: flex;
     gap: 6px;
   }
+}
+
+.section-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 0 16px 12px;
 }
 
 .dataset-tabs ::v-deep .el-tabs__item.is-active {
@@ -207,8 +278,6 @@ export default {
   background-color: #1a7f4b;
 }
 .dataset-list {
-  max-height: 240px;
-  overflow: auto;
   padding-right: 4px;
   .el-checkbox {
     display: flex;
@@ -224,8 +293,7 @@ export default {
 }
 
 .report-list {
-  max-height: 420px;
-  overflow: auto;
+  padding-bottom: 4px;
 }
 
 .report-item {
@@ -272,26 +340,8 @@ export default {
   align-items: flex-start;
 }
 
-.right-topbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.topbar-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  .topbar-title {
-    font-weight: 600;
-    color: #1a2e24;
-  }
-  .type-select {
-    width: 220px;
-  }
-}
-
 .pdf-wrap {
-  height: calc(100vh - 220px);
+  height: calc(100vh - 160px);
   min-height: 560px;
 }
 .pdf-frame-wrap {
@@ -308,6 +358,18 @@ export default {
 @media (max-width: 1100px) {
   .reports-layout {
     grid-template-columns: 1fr;
+  }
+  .left-pane {
+    height: auto;
+    min-height: 0;
+  }
+  .left-panel-card {
+    height: auto;
+    min-height: 480px;
+  }
+  .left-section {
+    max-height: none;
+    min-height: 220px;
   }
   .pdf-wrap {
     height: 560px;
